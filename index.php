@@ -4,6 +4,7 @@ $host = '127.0.0.1';
 $dbname = 'korzun';
 $user = 'korzun';
 $pass = 'neto1653';
+
 /*
 $host = '127.0.0.1';
 $dbname = 'lesson04-4';
@@ -41,6 +42,7 @@ function get_param($param_name) {
 
 $action=get_param('action');
 $field=get_param('field');
+$type=get_param('type');
 
   if ($action=='delete' and !empty($field)) {
     $sql = "ALTER TABLE ".$_REQUEST['table_name']." DROP COLUMN ".$field."";
@@ -49,7 +51,13 @@ $field=get_param('field');
   }
 
   if (isset($_POST['update']) and !empty($field)) {
-    $sql = "ALTER TABLE ".$_REQUEST['table_name']." CHANGE ".$field." ".$_REQUEST['field_update']." ".$_REQUEST['type_new']."(".$_REQUEST['length'].") NOT NULL";
+      if (empty($_REQUEST['length'])) {
+        $type_add=$type;
+      }
+      else {
+        $type_add="".$_REQUEST['type_new']."(".$_REQUEST['length'].")";
+  }
+    $sql = "ALTER TABLE ".$_REQUEST['table_name']." CHANGE ".$field." ".$_REQUEST['field_update']." ".$type_add." NOT NULL";
     $result = $db->prepare($sql)->execute();
     header ('location: index.php?table_name='.$_REQUEST['table_name'].'&action=view_details');
   }
@@ -137,7 +145,7 @@ if ($action=='view_details' and isset($_REQUEST['table_name'])) {   // Выво�
         echo
     "<td>
     <a href='?field=".$column['Field']."&table_name=".$_REQUEST['table_name']."&action=delete'>Удалить поле</a> | 
-    <a href='?field=".$column['Field']."&table_name=".$_REQUEST['table_name']."&action=update'>Изменить название и/или тип поля</a></td>
+    <a href='?field=".$column['Field']."&type=".$column['Type']."&table_name=".$_REQUEST['table_name']."&action=update'>Изменить название и/или тип поля</a></td>
     </tr>";
   }
 }
@@ -148,12 +156,13 @@ if ($action=='view_details' and isset($_REQUEST['table_name'])) {   // Выво�
 
 if ($action=='update' and !empty($field)) { // Выводим форму для внесения изменений в поле
   echo "<h3>Измените название и/или тип поля <u>".$field."</u> в таблице <u>".$_REQUEST['table_name']."</u></h3>
-<p>(Должны быть заполнены все поля)</p>
+<p>(При изменении типа поля обязательно введите длину поля)</p>
   <form method='POST'>
   Поле: <input type='text' name='field_update' placeholder='$field' value='$field'> &nbsp;
   <label for='type'>Выберите тип:</label>
     <select name='type_new'>
-      <option selected='int' value='INT'>INT</option>
+      <option selected value='type_default'>".$type."</option>
+      <option value='INT'>INT</option>
       <option value='varchar'>VARCHAR</option>
       <option value='text'>TEXT</option>
     </select>
